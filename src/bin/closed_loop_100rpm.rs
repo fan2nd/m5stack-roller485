@@ -32,7 +32,7 @@ const USE_CURRENT_LOOP: bool = false;
 
 const IQ_MAX_A: f32 = 0.35;
 const VOLTAGE_LIMIT_RATIO: f32 = 0.18;
-const VOLTAGE_MODE_START_VQ: f32 = 0.45;
+const VOLTAGE_MODE_START_VQ: f32 = 0.6;
 const OFFSET_SAMPLES: u32 = 256;
 const ALIGN_SECONDS: f32 = 0.6;
 const ALIGN_VOLTAGE: f32 = 0.45;

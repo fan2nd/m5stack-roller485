@@ -136,8 +136,8 @@ pub struct CurrentConfig {
 impl Default for CurrentConfig {
     fn default() -> Self {
         Self {
-            amp_per_lsb: 0.002,
-            vbus_divider_ratio: 2.2 / (1.2 + 12.0),
+            amp_per_lsb: 3.3 / 4095.0,
+            vbus_divider_ratio: 2.2 / (2.2 + 12.0),
             adc_vref: 3.3,
             adc_max: 4095.0,
         }
