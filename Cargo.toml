@@ -1,0 +1,41 @@
+[package]
+name = "m5stack_roller485"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+embassy-stm32 = { git = "https://github.com/embassy-rs/embassy", features = [
+    "defmt",
+    "time-driver-any",
+    "stm32g431cb",
+    "memory-x",
+    "unstable-pac",
+    "exti",
+] }
+embassy-sync = { git = "https://github.com/embassy-rs/embassy", features = [
+    "defmt",
+] }
+embassy-executor = { git = "https://github.com/embassy-rs/embassy", features = [
+    "arch-cortex-m",
+    "executor-thread",
+    "defmt",
+] }
+embassy-time = { git = "https://github.com/embassy-rs/embassy" }
+embassy-futures = { git = "https://github.com/embassy-rs/embassy" }
+
+embedded-cli = { git = "https://github.com/funbiscuit/embedded-cli-rs", package = "embedded-cli", default-features = false, features = ["macros", "help"] }
+embedded-io = "0.7.1"
+ufmt = "0.2.0"
+libm = "0.2"
+
+# Keep defmt at 0.3.x via re-export so all embassy crates stay ABI-compatible.
+defmt = "0.3.100"
+defmt-rtt = "0.4.0"
+cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7.0"
+panic-probe = { version = "1.0.0", features = ["print-defmt"] }
+heapless = { version = "0.8", default-features = false }
+static_cell = "2.0.0"
+critical-section = "1.1"
+assign-resources = "0.5.0"
+
