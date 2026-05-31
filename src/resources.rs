@@ -2,17 +2,23 @@ use assign_resources::assign_resources;
 use embassy_stm32::{Peri, peripherals};
 
 assign_resources! {
-    motor: MotorResources {
+    current: CurrentResources {
         adc: ADC1 = MotorAdc,
         adc_dma: DMA1_CH1 = MotorAdcDma,
         vbus: PA0 = VbusAdcPin,
         phase_a_current: PA1 = PhaseACurrentPin,
         phase_b_current: PA2 = PhaseBCurrentPin,
         phase_c_current: PA3 = PhaseCCurrentPin,
+    }
+
+    motor_pwm: MotorPwmResources {
         pwm_timer: TIM1 = MotorPwmTimer,
         phase_c_pwm: PA8 = PhaseCPwmPin,
         phase_b_pwm: PA9 = PhaseBPwmPin,
         phase_a_pwm: PA10 = PhaseAPwmPin,
+    }
+
+    motor_io: MotorIoResources {
         drv_fault: PB0 = DrvFaultPin,
         drv_en: PB1 = DrvEnablePin,
         pwm_en: PB2 = PwmEnablePin,
@@ -50,9 +56,9 @@ assign_resources! {
         sda: PB7 = BoardI2cSdaPin,
     }
 
-    tim3_pwm: Tim3PwmResources {
+    ws2812: Ws2812Resources {
         timer: TIM3 = Tim3PwmTimer,
-        ch2: PB5 = Tim3Ch2Pin,
+        pin: PB5 = Tim3Ch2Pin,
         dma: DMA1_CH3 = Tim3Ch2Dma,
     }
 

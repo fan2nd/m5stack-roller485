@@ -3,55 +3,21 @@ use embassy_stm32::time::khz;
 use embassy_stm32::timer::Channel;
 use embassy_stm32::timer::low_level::CountingMode;
 use embassy_stm32::timer::simple_pwm::{PwmPin, SimplePwm};
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::signal::Signal;
 use embassy_time::Timer;
 
-use crate::resources::Tim3PwmResources;
-
-pub const LED_COUNT: usize = 2;
+use crate::communication::ws2812::{Command, LED_COUNT, Rgb, SIGNAL};
+use crate::resources::Ws2812Resources;
 
 const BITS_PER_LED: usize = 24;
 const RESET_SLOTS: usize = 1;
 const WAVEFORM_LEN: usize = LED_COUNT * BITS_PER_LED + RESET_SLOTS;
 
-pub static SIGNAL: Signal<CriticalSectionRawMutex, Command> = Signal::new();
-
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Rgb {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-}
-
-impl Rgb {
-    pub const OFF: Self = Self::new(0, 0, 0);
-
-    pub const fn new(r: u8, g: u8, b: u8) -> Self {
-        Self { r, g, b }
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum Command {
-    Set([Rgb; LED_COUNT]),
-    Off,
-}
-
-pub fn set(colors: [Rgb; LED_COUNT]) {
-    SIGNAL.signal(Command::Set(colors));
-}
-
-pub fn off() {
-    SIGNAL.signal(Command::Off);
-}
-
 #[embassy_executor::task]
-pub async fn task(resources: Tim3PwmResources) {
+pub async fn task(resources: Ws2812Resources) {
     let mut pwm = SimplePwm::new(
         resources.timer,
         None,
-        Some(PwmPin::new(resources.ch2, OutputType::PushPull)),
+        Some(PwmPin::new(resources.pin, OutputType::PushPull)),
         None,
         None,
         khz(800),
