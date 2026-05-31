@@ -28,9 +28,11 @@ const TARGET_RPM: f32 = 100.0;
 const POLE_PAIRS_FALLBACK: f32 = 7.0;
 const SENSOR_DIR_FALLBACK: f32 = 1.0;
 const ELECTRICAL_OFFSET: f32 = 0.0;
+const USE_CURRENT_LOOP: bool = false;
 
 const IQ_MAX_A: f32 = 0.35;
 const VOLTAGE_LIMIT_RATIO: f32 = 0.18;
+const VOLTAGE_MODE_START_VQ: f32 = 0.45;
 const OFFSET_SAMPLES: u32 = 256;
 const ALIGN_SECONDS: f32 = 0.6;
 const ALIGN_VOLTAGE: f32 = 0.45;
@@ -196,12 +198,16 @@ async fn main(_spawner: Spawner) {
     let theta_align = read_mech_theta(&mut sensor).unwrap_or(0.0);
     let electrical_offset = wrap_angle(-sensor_dir * pole_pairs * theta_align + ELECTRICAL_OFFSET);
     info!(
-        "stage: run 100rpm theta_align={} electrical_offset={}",
-        theta_align, electrical_offset
+        "stage: run 100rpm theta_align={} electrical_offset={} current_loop={}",
+        theta_align, electrical_offset, USE_CURRENT_LOOP
     );
 
     let mut last_theta_m = read_mech_theta(&mut sensor).unwrap_or(0.0);
-    let mut vel_pi = Pi::new(0.02, 0.3, IQ_MAX_A);
+    let mut vel_pi = if USE_CURRENT_LOOP {
+        Pi::new(0.02, 0.3, IQ_MAX_A)
+    } else {
+        Pi::new(0.04, 0.8, 2.0)
+    };
     let mut id_pi = Pi::new(0.25, 30.0, 2.0);
     let mut iq_pi = Pi::new(0.25, 30.0, 2.0);
     let target_omega = TARGET_RPM * TWO_PI / 60.0;
@@ -252,7 +258,6 @@ async fn main(_spawner: Spawner) {
         let theta_e = wrap_angle(sensor_dir * pole_pairs * theta_m + electrical_offset);
         let (sin_t, cos_t) = (libm::sinf(theta_e), libm::cosf(theta_e));
 
-        let iq_ref = vel_pi.step(target_omega - omega_m, CONTROL_DT);
         let (i_alpha, i_beta) = clarke(sample.phase.ia, sample.phase.ib);
         let id = i_alpha * cos_t + i_beta * sin_t;
         let iq = -i_alpha * sin_t + i_beta * cos_t;
@@ -261,8 +266,21 @@ async fn main(_spawner: Spawner) {
         id_pi.set_limit(v_limit);
         iq_pi.set_limit(v_limit);
 
-        let vd = id_pi.step(-id, CONTROL_DT);
-        let vq = iq_pi.step(iq_ref - iq, CONTROL_DT);
+        let speed_cmd = vel_pi.step(target_omega - omega_m, CONTROL_DT);
+        let (iq_ref, vd, vq) = if USE_CURRENT_LOOP {
+            (
+                speed_cmd,
+                id_pi.step(-id, CONTROL_DT),
+                iq_pi.step(speed_cmd - iq, CONTROL_DT),
+            )
+        } else {
+            (
+                0.0,
+                0.0,
+                (target_omega.signum() * VOLTAGE_MODE_START_VQ + speed_cmd)
+                    .clamp(-v_limit, v_limit),
+            )
+        };
 
         let v_alpha = vd * cos_t - vq * sin_t;
         let v_beta = vd * sin_t + vq * cos_t;
@@ -277,11 +295,13 @@ async fn main(_spawner: Spawner) {
         if telemetry_ticks >= TELEMETRY_PERIOD_TICKS {
             telemetry_ticks = 0;
             info!(
-                "run rpm={} iq_ref={} id={} iq={} vbus={}",
+                "run rpm={} speed_cmd={} iq_ref={} id={} iq={} vq={} vbus={}",
                 omega_m * 60.0 / TWO_PI,
+                speed_cmd,
                 iq_ref,
                 id,
                 iq,
+                vq,
                 sample.vbus
             );
         }
