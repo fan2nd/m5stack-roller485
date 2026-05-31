@@ -23,7 +23,10 @@ embassy-executor = { git = "https://github.com/embassy-rs/embassy", features = [
 embassy-time = { git = "https://github.com/embassy-rs/embassy" }
 embassy-futures = { git = "https://github.com/embassy-rs/embassy" }
 
-embedded-cli = { git = "https://github.com/funbiscuit/embedded-cli-rs", package = "embedded-cli", default-features = false, features = ["macros", "help"] }
+embedded-cli = { git = "https://github.com/funbiscuit/embedded-cli-rs", package = "embedded-cli", default-features = false, features = [
+    "macros",
+    "help",
+] }
 embedded-io = "0.7.1"
 ufmt = "0.2.0"
 libm = "0.2"
@@ -39,3 +42,5 @@ static_cell = "2.0.0"
 critical-section = "1.1"
 assign-resources = "0.5.0"
 
+[profile.release]
+debug = 2
